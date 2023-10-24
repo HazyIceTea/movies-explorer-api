@@ -11,7 +11,7 @@ const { JWT_SECRET } = process.env;
 
 module.exports.getUserInfo = (req, res, next) => {
   User.findById(req.user._id)
-    .then((user) => res.send(user))
+    .then((user) => res.status(http2.constants.HTTP_STATUS_OK).send(user))
     .catch((err) => next(err));
 };
 
@@ -21,12 +21,14 @@ module.exports.updateUserInfo = (req, res, next) => {
     runValidators: true,
     new: true,
   })
-    .then((user) => (user
-      ? res.send(user)
-      : next(new ErrorNotFound('Пользователь не найден'))))
+    .orFail(new ErrorNotFound('Пользователь не найден'))
+    .then((user) => res.status(http2.constants.HTTP_STATUS_OK).send(user))
     .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) next(new ErrorBadRequest(err));
-      else next(err);
+      if (err.code === 11000) {
+        next(new ErrorConflict('Пользователь с таким Email уже существует'));
+      } else if (err instanceof mongoose.Error.ValidationError) {
+        next(new ErrorBadRequest(err.message));
+      } else next(err);
     });
 };
 
@@ -48,7 +50,7 @@ module.exports.createUser = (req, res, next) => {
           if (err.code === 11000) {
             next(new ErrorConflict('Пользователь с таким Email уже существует'));
           } else if (err instanceof mongoose.Error.ValidationError) {
-            next(new ErrorBadRequest(err));
+            next(new ErrorBadRequest(err.message));
           } else next(err);
         });
     });

@@ -6,8 +6,8 @@ const ErrorBadRequest = require('../errors/ErrorBadRequest');
 const ErrorForbidden = require('../errors/ErrorForbidden');
 
 module.exports.getMovies = (req, res, next) => {
-  Movie.find({})
-    .then((movies) => res.send(movies))
+  Movie.find({ owner: req.user._id })
+    .then((movies) => res.status(http2.constants.HTTP_STATUS_OK).send(movies))
     .catch((err) => next(err));
 };
 
@@ -57,11 +57,11 @@ module.exports.addMovie = (req, res, next) => {
     movieId,
     nameRU,
     nameEN,
-    owner: req.user._id
+    owner: req.user._id,
   })
     .then((movie) => res.status(http2.constants.HTTP_STATUS_CREATED).send(movie))
     .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) next(new ErrorBadRequest(err));
+      if (err instanceof mongoose.Error.ValidationError) next(new ErrorBadRequest(err.message));
       else next(err);
     });
 };
