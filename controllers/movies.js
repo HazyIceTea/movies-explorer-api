@@ -57,6 +57,7 @@ module.exports.addMovie = (req, res, next) => {
     movieId,
     nameRU,
     nameEN,
+    owner: req.user._id
   })
     .then((movie) => res.status(http2.constants.HTTP_STATUS_CREATED).send(movie))
     .catch((err) => {
